@@ -1,0 +1,5 @@
+The files that follow the "Rn_OD_X-Y" naming structure contain the origin-destination flow from hour X to hour Y with the following columns
+	Origin tower ID, destination tower ID, closest road intersection to origin, closest intersection to destination, origin-destination flow
+
+The file "towers_index.txt" contains the locations of all the cell towers with the following columns. The row number is the id of the cell tower starting with 1.
+ 	Latitude, longitude, node ID of the closest intersection to the tower
