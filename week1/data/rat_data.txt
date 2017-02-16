@@ -1,5 +1,0 @@
-City, Number
-Cambridge, 400
-Boston, 900
-Somerville, 300
-Brookline, 600
