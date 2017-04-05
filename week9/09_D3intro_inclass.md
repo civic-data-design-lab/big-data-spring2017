@@ -7,7 +7,7 @@ This week, we are going to start digging into D3! Our exercise this week is goin
 
 1. The first thing you will want to do is grab a current copy of the repo from Github. In the repo for the week, you will find data and code examples for the exercises.
 
-2. Start up a localhost python server in the directory that contains your examples and data folder. This is where we will do our visualization design and coding.
+2. Start up a *localhost python server* in the directory that contains your examples and data folder. This is where we will do our visualization design and coding.
 
 3. Find the in-class exercise at:
 
@@ -17,4 +17,4 @@ This page will contain the tutorial for the week. We are going to make a bar cha
 
 4. The take-home problem set (PSET6_d3_introduction) is found at the following in this weeks folder.
 
-[https://github.com/civic-data-design-lab/big-data-spring2017](https://github.com/civic-data-design-lab/big-data-spring2017)
+[https://github.com/civic-data-design-lab/big-data-spring2017/blob/master/week9/09_PSET6_d3_introduction.md](https://github.com/civic-data-design-lab/big-data-spring2017/blob/master/week9/09_PSET6_d3_introduction.md)
