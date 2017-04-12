@@ -21,7 +21,7 @@
 
 </style>
 <body>
-<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/d3.v4.min.js"></script>
 <script src="//d3js.org/topojson.v1.min.js"></script>
 <script>
 
@@ -29,37 +29,37 @@ var width = 960,
     height = 960;
 
 // Albers
-var projectionAlbers = d3.geo.albers()
-    .scale( 5000 )
-    .rotate( [71.057,0] )
-    .center( [0, 42.313] )
-    .translate( [width/2,height/2] );
+var projectionAlbers = d3.geoAlbers()
+    .scale(1000)
+    .rotate([71.057,0])
+    .center([0,42.313])
+    .translate([width/2,height/2]);
 
 // Mercator
-var projectionMerc = d3.geo.mercator()
-    .scale( 5000 )
-    .rotate( [71.057,0] )
-    .center( [0, 42.313] )
-    .translate( [width/2,height/2] );
+var projectionMerc = d3.geoMercator()
+    .scale(1000)
+    .rotate([71.057,0])
+    .center([0, 42.313])
+    .translate([width/2,height/2]);
 
 // Conic Equidistant
-var projectionConicEq = d3.geo.conicEquidistant()
-    .scale( 5000 )
-    .rotate( [71.057,0] )
-    .center( [0, 42.313] )
-    .translate( [width/2,height/2] );
+var projectionConicEq = d3.geoConicEquidistant()
+    .scale(1000)
+    .rotate([71.057,0])
+    .center([0,42.313])
+    .translate([width/2,height/2]);
 
 // Orthographic
-var projectionOrtho = d3.geo.orthographic()
-    .scale( 5000 )
-    .rotate( [71.057,0] )
-    .center( [0, 42.313] )
-    .translate( [width/2,height/2] );
+var projectionOrtho = d3.geoOrthographic()
+    .scale(1000)
+    .rotate([71.057,0])
+    .center([0,42.313])
+    .translate([width/2,height/2]);
 
-var path = d3.geo.path()
-    .projection(projectionOrtho);
+var path = d3.geoPath()
+    .projection(projectionMerc);
 
-var graticule = d3.geo.graticule();
+var graticule = d3.geoGraticule();
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
