@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>Mapping with D3</title>
+	<script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+	<script src="https://d3js.org/d3-array.v1.min.js"></script>
+	<script src="https://d3js.org/d3-geo.v1.min.js"></script>
+	<script src="https://d3js.org/d3-queue.v3.min.js"></script>
+	<script src="https://d3js.org/topojson.v2.min.js"></script>
+	
+	<style>
+	  .states {
+		fill: none;
+		stroke: #aaa;
+		stroke-linejoin: round;
+	  }
+	  #main {
+		  width: 960px;
+		}
+		.axis .domain {
+		  display: none;
+	}
+
+	.hover{
+		stroke: #111;
+		stroke-dasharray: 2;
+		stroke-width: 3px;
+
+		opacity: .5;}
+	</style>
+</head>
+<body>
+<div class="container">
+	<div id="map"></div>
+</div>
+<div class="container">	
+	<div id="main">
+		<svg width="960" height="500" id="chart"></svg>
+	</div>
+</div>
+
+<script>
+//MAP CHOROPLETH
+	// set width and height of graphic
+	var width = 960,
+		height = 500;
+
+	var projection = d3.geoAlbersUsa()
+		.scale(1000)
+		.translate([width / 2, height / 2]);
+
+	// d3 geopath for projection
+	var path = d3.geoPath()
+		.projection(projection);
+
+	// create SVG elements in map HTML element
+	var svg = d3.select("#map").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+	// set color
+	var color = d3.scaleThreshold()
+		.domain([-0.25, -0.1, -0.001, .1, 0.25, 1])
+		.range(["#b2182b", "#ef8a62", "#fddbc7", "#d1e5f0", "#67a9cf", "#2166ac"]);
+
+	// queue up the datasets, run 'ready' when loaded
+	d3.queue()
+		.defer(d3.json, "data/us.json")
+		.defer(d3.csv, "data/election_2016_state_results.csv")
+		.await(ready);
+
+	// create the graphic with this function
+	function ready(error, us, margin) {
+	  if (error) throw error;
+
+	  var marginById = {}; // Create empty object for holding dataset
+	  var stateById = {};
+	  margin.forEach(function(d) {
+		marginById[d.id] = +d.victory_margin;
+		stateById[d.id] = d.State;		
+	  });
+	
+	  
+	  // create and style states
+	  svg.append("g")
+		.attr("class", "states")
+		.selectAll("path")
+		.data(topojson.feature(us, us.objects.states).features)
+		.enter().append("path")
+			.attr("d", path)
+			.style("fill", function(d) { return color(marginById[d.id])})
+			
+			//The next line assigns each state a class based on its name: AK, AR, etc.
+			.attr("class", function(d) { return stateById[d.id]; })
+			
+			//This part adds the class "hover" to the state and its matching rectangle in the chart
+			.on("mouseover", function(d) {
+				
+				d3.selectAll("." + stateById[d.id]).classed("hover",true);
+				console.log(stateById[d.id]);
+			})
+			.on("mouseout", function(d) {
+				d3.select(this).style("fill",function(d) { return color(marginById[d.id])});
+				d3.selectAll("." + stateById[d.id]).classed("hover", false);
+			});
+
+			
+	  // create state outlines
+	  svg.append("path")
+		  .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+		  .attr("class", "states")
+		  .attr("d", path);
+	
+//STACKED BAR CHART WITH HOVER
+	var svg2 = d3.select("#chart"),
+		margin = {top: 20, right: 20, bottom: 30, left: 40},
+		width = +svg.attr("width") - margin.left - margin.right,
+		height = +svg.attr("height") - margin.top - margin.bottom,
+		g = svg2.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	// set x scale
+	var x = d3.scaleBand()
+		.rangeRound([0, width])
+		.paddingInner(0.05)
+		.align(0.1);
+
+	// set y scale
+	var y = d3.scaleLinear()
+		.rangeRound([height, 0]);
+
+	// set the colors
+	var z = d3.scaleOrdinal()
+		.range(["#2166ac","#b2182b","#aaa"]);
+
+	// load the csv and create the chart
+	d3.csv("data/election_2016_state_results2.csv", function(d, i, columns) {
+	  for (i = 1, t = 0; i < columns.length; ++i) t += d[columns[i]] = +d[columns[i]];
+	  d.total = t;
+	  return d;
+	}, function(error, data) {
+	  if (error) throw error;
+
+	  var keys = data.columns.slice(1);
+
+	  data.sort(function(a, b) { return b.total - a.total; });
+	  x.domain(data.map(function(d) { return d.State; }));
+	  y.domain([0, d3.max(data, function(d) { return d.total; })]).nice();
+	  z.domain(keys);
+
+	  g.append("g")
+		.selectAll("g")
+		.data(d3.stack().keys(keys)(data))
+		.enter().append("g")
+		  .attr("fill", function(d) { return z(d.key); })
+		.selectAll("rect")
+		.data(function(d) { return d; })
+		.enter().append("rect")
+		  .attr("x", function(d) { return x(d.data.State); })
+		  .attr("y", function(d) { return y(d[1]); })
+		  .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+		  .attr("width", x.bandwidth())
+		  
+		  //The next line assigns each rectangle a class that matches the state names above: AK, AR, etc.
+		  .attr("class", function (d) { return d.data.State;})
+		  
+		  //The mouseover functions work just like the ones in the map, they add "hover" class to all matching elements
+		.on("mouseover", function(d) {
+				//d3.select(this).classed("hover",true);
+				d3.selectAll("." + d.data.State).classed("hover",true);
+				console.log(d.data.State);
+			})
+		.on("mouseout", function(d) {
+			//d3.select(this).classed("hover",false);
+			d3.selectAll("." + d.data.State).classed("hover", false);
+		});
+
+
+	  g.append("g")
+		  .attr("class", "axis")
+		  .attr("transform", "translate(0," + height + ")")
+		  .call(d3.axisBottom(x));
+
+	  g.append("g")
+		  .attr("class", "axis")
+		  .call(d3.axisLeft(y).ticks(null, "s"))
+		.append("text")
+		  .attr("x", 2)
+		  .attr("y", y(y.ticks().pop()) + 0.5)
+		  .attr("dy", "0.32em")
+		  .attr("fill", "#000")
+		  .attr("font-weight", "bold")
+		  .attr("text-anchor", "start");
+
+	  var legend = g.append("g")
+		  .attr("font-family", "sans-serif")
+		  .attr("font-size", 10)
+		  .attr("text-anchor", "end")
+		.selectAll("g")
+		.data(keys.slice().reverse())
+		.enter().append("g")
+		  .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+	  legend.append("rect")
+		  .attr("x", width - 19)
+		  .attr("width", 19)
+		  .attr("height", 19)
+		  .attr("fill", z);
+
+	  legend.append("text")
+		  .attr("x", width - 24)
+		  .attr("y", 9.5)
+		  .attr("dy", "0.32em")
+		  .text(function(d) { return d; });
+	});
+
+	  // Prep the tooltip bits, initial display is hidden
+	  var tooltip = svg2.append("g")
+		.attr("class", "tooltip")
+		.style("display", "none");
+		  
+	  tooltip.append("rect")
+		.attr("width", 60)
+		.attr("height", 20)
+		.attr("fill", "white")
+		.style("opacity", 0.5);
+
+	  tooltip.append("text")
+		.attr("x", 30)
+		.attr("dy", "1.2em")
+		.style("text-anchor", "middle")
+		.attr("font-size", "12px")
+		.attr("font-weight", "bold");
+		
+	}
+//CONNECTING THEM
+
+
+</script>	
+</body>
+</html>

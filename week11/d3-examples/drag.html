@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>I'm Learning D3</title>
+	<script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+	<style>
+body {
+  font: 12px sans-serif;
+}
+.dot {
+    fill:steelblue;
+}
+
+svg {
+  border-color: black;
+  border-style: solid;
+  border-width: 1px;
+}
+	</style>
+</head>
+<body>
+  <p style="position: absolute; margin-left: 6px; margin-top: 6px; text-size: 12px;">Click and Drag the Circles! The radius of them is determined by our data.</p>
+	<!-- Location for page elements. -->
+  <svg width="720" height="400"></svg>
+<script>
+// The Dataset in JSON format
+dataset = [
+  { x: 100, y: 100, value: 50, city: "Cambridge" },
+  { x: 175, y: 250, value: 80, city: "Boston" },
+  { x: 300, y: 100, value: 30, city: "Brookline" },
+  { x: 400, y: 200, value: 40, city: "Somerville" },
+  { x: 225, y: 125, value: 20, city: "Watertown" },
+  { x: 450, y: 100, value: 50, city: "Medford" }
+];
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    radius = 32;
+
+var color = d3.scaleOrdinal()
+    .range(d3.schemeCategory20);
+
+svg.selectAll("circle")
+  .data(dataset)
+  .enter().append("circle")
+    .attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; })
+    .attr("r", function(d) { return d.value; })
+    .style("fill", function(d, i) { return color(i); })
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+function dragstarted(d) {
+  d3.select(this).raise().classed("active", true);
+}
+
+function dragged(d) {
+  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+}
+
+function dragended(d) {
+  d3.select(this).classed("active", false);
+}
+
+</script>
+</body>
+</html>

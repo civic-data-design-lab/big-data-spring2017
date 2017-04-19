@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<style>
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+.axis .domain {
+  display: none;
+}
+</style>
+<div id="main">
+<svg width="960" height="650"></svg>
+<form style="top: 650">
+  <label><input type="radio" name="mode" value="multiples"> Multiples</label>
+  <label><input type="radio" name="mode" value="stacked" checked> Stacked</label>
+</form>
+</div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+// create the svg
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    g = svg.append("g").attr("height",400).attr("width", 960);
+
+// set x scale
+var x = d3.scaleBand()
+    .rangeRound([0, width])
+    .paddingInner(0.05)
+    .align(0.1);
+
+// set y scale
+var y = d3.scaleLinear()
+    .rangeRound([550, 0]);
+
+// set the colors
+var z = d3.scaleOrdinal()
+    .range(["#084594", "#cb181d", "#999999"]);
+
+// load the csv and create the chart
+d3.csv("data/election_2016_state_results.csv", function(d, i, columns) {
+  for (i = 1, t = 0; i < columns.length; ++i) t += d[columns[i]] = +d[columns[i]];
+  d.total = t;
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys = data.columns.slice(1);
+
+  data.sort(function(a, b) { return b.total - a.total; });
+  x.domain(data.map(function(d) { return d.State; }));
+  y.domain([0, d3.max(data, function(d) { return d.total; })]).nice();
+  z.domain(keys);
+
+  g.append("g")
+    .selectAll("g")
+    .data(d3.stack().keys(keys)(data))
+    .enter().append("g")
+      .attr("fill", function(d) {
+        return z(d.key);
+      })
+      .attr("class",  function(d) {
+        return d.key;
+      })
+    .selectAll("rect")
+    .data(function(d) {
+      return d;
+    })
+    .enter()
+    .append("rect")
+      .attr("x", function(d) { return x(d.data.State); })
+      .attr("y", function(d) { return y(d[1]) + 80; })
+      .attr("height", function(d) { 
+        return y(d[0]) - y(d[1]); })
+      .attr("width", x.bandwidth())
+    .on("mouseover", function() { tooltip.style("display", null); })
+    .on("mouseout", function() { tooltip.style("display", "none"); })
+    .on("mousemove", function(d) {
+      var xPosition = d3.mouse(this)[0] - 5;
+      var yPosition = d3.mouse(this)[1] - 5;
+      tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+      tooltip.select("text").text(d[1]-d[0]);
+    });
+
+  d3.selectAll("input").on("change", change);
+
+  function change() {
+    if (this.value === "multiples") transitionMultiples();
+    else transitionStacked();
+  }
+
+  function transitionMultiples() {
+    console.log('clicked multiples');
+    // load the csv and create the chart
+    d3.csv("data/election_2016_state_results.csv", function(d, i, columns) {
+      for (i = 1, t = 0; i < columns.length; ++i) t += d[columns[i]] = +d[columns[i]];
+      d.total = t;
+      return d;
+    }, function(error, data) {
+      d3.selectAll(".Democrat")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return height - (y(d[0]) - y(d[1])) - 20;
+        })
+        .attr("height", function(d) {
+          return y(d[0]) - y(d[1]);
+        });
+
+      d3.selectAll(".Republican")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return height - (y(d[0]) - y(d[1])) - 361;
+        })
+        .attr("height", function(d) {
+          return y(d[0]) - y(d[1]);
+        });
+
+      d3.selectAll(".Other")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return height - (y(d[0]) - y(d[1])) - 580;
+        })
+        .attr("height", function(d) {
+          return y(d[0]) - y(d[1]);
+      });
+    });
+  }
+
+  function transitionStacked() {
+    console.log('clicked stacked');
+    // load the csv and create the chart
+    d3.csv("data/election_2016_state_results.csv", function(d, i, columns) {
+      for (i = 1, t = 0; i < columns.length; ++i) t += d[columns[i]] = +d[columns[i]];
+      d.total = t;
+      return d;
+    }, function(error, data) {
+      d3.selectAll(".Democrat")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return y(d[1]) + 80;
+        })
+        .attr("height", function(d) {
+          return y(d[0]) - y(d[1]);
+        });
+
+      d3.selectAll(".Republican")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return y(d[1]) + 80;
+        })
+        .attr("height", function(d) {
+          console.log(y(d[0]) - y(d[1]));
+          return y(d[0]) - y(d[1]);
+        });
+
+      d3.selectAll(".Other")
+        .transition()
+        .selectAll("rect")
+        .attr("y", function(d){
+          return y(d[1]) + 80;
+        })
+        .attr("height", function(d) {
+          return y(d[0]) - y(d[1]);
+        });
+    });
+  }
+
+  g.append("g")
+      .attr("class", "axis")
+      .attr("transform", "translate(0,630)")
+      .call(d3.axisBottom(x));
+
+  var legend = g.append("g")
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 10)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys.slice().reverse())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend.append("rect")
+      .attr("x", width - 19)
+      .attr("width", 19)
+      .attr("height", 19)
+      .attr("fill", z);
+
+  legend.append("text")
+      .attr("x", width - 24)
+      .attr("y", 9.5)
+      .attr("dy", "0.32em")
+      .text(function(d) { return d; });
+});
+
+  // Prep the tooltip bits, initial display is hidden
+  var tooltip = svg.append("g")
+    .attr("class", "tooltip")
+    .style("display", "none");
+      
+  tooltip.append("rect")
+    .attr("width", 60)
+    .attr("height", 20)
+    .attr("fill", "white")
+    .style("opacity", 0.5);
+
+  tooltip.append("text")
+    .attr("x", 30)
+    .attr("dy", "1.2em")
+    .style("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold");
+
+</script>
